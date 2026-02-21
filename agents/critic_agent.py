@@ -11,7 +11,7 @@ class CriticAgent:
     
     def evaluate(self, original_task: str, output: str) -> dict:
         """Evaluate the quality of the output"""
-        print("[CriticAgent] 🎯 Evaluating output quality...")
+        print("[CriticAgent]  Evaluating output quality...")
         
         prompt = f"""Evaluate this task execution:
 
@@ -69,4 +69,5 @@ Return ONLY valid JSON in this format:
                 "overall_score": 5.0,
                 "should_retry": False,
                 "error": str(e)
+
             }
