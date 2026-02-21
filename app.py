@@ -5,7 +5,7 @@ def print_evaluation(eval_data):
     if not eval_data:
         return
     
-    print("\n📊 QUALITY EVALUATION:")
+    print("\n QUALITY EVALUATION:")
     print(f"  Overall Score: {eval_data.get('overall_score', 'N/A')}/10")
     print(f"  Completeness: {eval_data.get('completeness', 'N/A')}/10")
     print(f"  Accuracy: {eval_data.get('accuracy', 'N/A')}/10")
@@ -13,12 +13,12 @@ def print_evaluation(eval_data):
     print(f"  Usefulness: {eval_data.get('usefulness', 'N/A')}/10")
     
     if "strengths" in eval_data:
-        print("\n  ✅ Strengths:")
+        print("\n   Strengths:")
         for strength in eval_data["strengths"]:
             print(f"    • {strength}")
     
     if "improvements" in eval_data:
-        print("\n  💡 Suggested Improvements:")
+        print("\n   Suggested Improvements:")
         for improvement in eval_data["improvements"]:
             print(f"    • {improvement}")
 
@@ -40,7 +40,7 @@ def main():
         result = pipeline.run(topic, max_iterations=2)
         
         print("\n" + "="*70)
-        print("📄 FINAL OUTPUT:")
+        print(" FINAL OUTPUT:")
         print("="*70)
         print(result["final_output"])
         
@@ -53,4 +53,5 @@ def main():
     pipeline.show_metrics()
 
 if __name__ == "__main__":
+
     main()
