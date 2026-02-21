@@ -9,7 +9,7 @@ class CoordinatorAgent:
         self.critic_agent = CriticAgent()
 
     def decide_plan(self, goal: str):
-        print("[Coordinator] 📋 Planning task execution...")
+        print("[Coordinator]  Planning task execution...")
         return ["research", "summary", "critique"]
 
     def execute(self, goal: str, max_iterations: int = 2) -> dict:
@@ -25,7 +25,7 @@ class CoordinatorAgent:
         
         for iteration in range(max_iterations):
             print(f"\n{'='*60}")
-            print(f"🔄 ITERATION {iteration + 1}/{max_iterations}")
+            print(f" ITERATION {iteration + 1}/{max_iterations}")
             print(f"{'='*60}\n")
             
             iteration_data = {
@@ -60,9 +60,10 @@ class CoordinatorAgent:
             if not evaluation.get("should_retry", False) or iteration == max_iterations - 1:
                 results["final_output"] = summary_output
                 results["final_evaluation"] = evaluation
-                print(f"\n✅ Task complete after {iteration + 1} iteration(s)!")
+                print(f"\n Task complete after {iteration + 1} iteration(s)!")
                 break
             else:
-                print(f"\n🔁 Retrying to improve quality...")
+                print(f"\n Retrying to improve quality...")
         
+
         return results
