@@ -40,8 +40,8 @@ class TaskPipeline:
         self.memory.save(task, result)
         
         print(f"\n{'='*70}")
-        print("✅ TASK COMPLETE")
-        print(f"⏱️  Execution time: {execution_time:.2f} seconds")
+        print(" TASK COMPLETE")
+        print(f"  Execution time: {execution_time:.2f} seconds")
         print(f"{'='*70}\n")
         
         return result
@@ -49,10 +49,11 @@ class TaskPipeline:
     def show_metrics(self):
         """Display performance metrics"""
         print("\n" + "="*70)
-        print("📊 SYSTEM PERFORMANCE METRICS")
+        print(" SYSTEM PERFORMANCE METRICS")
         print("="*70)
         print(f"Total tasks completed: {self.metrics['total_tasks']}")
         print(f"Total iterations: {self.metrics['total_iterations']}")
         print(f"Average quality score: {self.metrics['avg_score']:.1f}/10")
         print(f"Avg iterations per task: {self.metrics['total_iterations']/max(1, self.metrics['total_tasks']):.1f}")
+
         print("="*70 + "\n")
