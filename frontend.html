@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Autonomous Agent</title>
   <style>
-    /* ── RESET & BASE ── */
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -16,13 +15,11 @@
       padding: 40px 20px;
     }
 
-    /* ── LAYOUT ── */
     .container {
       max-width: 800px;
       margin: 0 auto;
     }
 
-    /* ── HEADER ── */
     h1 {
       font-size: 24px;
       color: #58a6ff;
@@ -35,14 +32,14 @@
       margin-bottom: 32px;
     }
 
-    /* ── INPUT BOX ── */
+    /* INPUT */
     .input-row {
       display: flex;
       gap: 10px;
-      margin-bottom: 32px;
+      margin-bottom: 16px;
     }
 
-    input {
+    input[type="text"] {
       flex: 1;
       background: #161b22;
       border: 1px solid #30363d;
@@ -54,9 +51,7 @@
       transition: border 0.2s;
     }
 
-    input:focus {
-      border-color: #58a6ff;
-    }
+    input[type="text"]:focus { border-color: #58a6ff; }
 
     button {
       background: #238636;
@@ -73,7 +68,72 @@
     button:hover { background: #2ea043; }
     button:disabled { background: #21262d; color: #6e7681; cursor: not-allowed; }
 
-    /* ── AGENT PIPELINE ── */
+    /* IMAGE SECTION */
+    .image-section {
+      margin-bottom: 24px;
+    }
+
+    .image-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .btn-upload {
+      background: #1f6feb;
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+
+    .btn-upload:hover { background: #388bfd; }
+
+    .btn-remove {
+      background: #da3633;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .btn-remove:hover { background: #f85149; }
+
+    .image-status {
+      color: #6e7681;
+      font-size: 13px;
+    }
+
+    .image-preview {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .image-preview img {
+      max-width: 300px;
+      max-height: 200px;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      object-fit: cover;
+    }
+
+    /* INTENT BADGE */
+    .intent-badge {
+      display: none;
+      margin-bottom: 16px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      width: fit-content;
+    }
+
+    .intent-research   { background: #0d1f12; border: 1px solid #238636; color: #3fb950; }
+    .intent-teaching   { background: #0d1223; border: 1px solid #1f6feb; color: #58a6ff; }
+    .intent-coding     { background: #1f1000; border: 1px solid #d29922; color: #e3b341; }
+    .intent-comparison { background: #1a0d2e; border: 1px solid #8957e5; color: #a371f7; }
+    .intent-image      { background: #1a0d1a; border: 1px solid #db61a2; color: #f778ba; }
+
+    /* PIPELINE */
     .pipeline-title {
       font-size: 12px;
       text-transform: uppercase;
@@ -100,10 +160,10 @@
       transition: border-color 0.3s, background 0.3s;
     }
 
-    /* status colors */
     .agent-card.running  { border-color: #d29922; background: #1c1810; }
     .agent-card.complete { border-color: #238636; background: #0d1f12; }
     .agent-card.error    { border-color: #da3633; background: #1f0d0d; }
+    .agent-card.skipped  { opacity: 0.4; }
 
     .agent-left {
       display: flex;
@@ -111,11 +171,7 @@
       gap: 12px;
     }
 
-    .agent-icon {
-      font-size: 18px;
-      width: 28px;
-      text-align: center;
-    }
+    .agent-icon { font-size: 18px; width: 28px; text-align: center; }
 
     .agent-name {
       font-size: 14px;
@@ -140,6 +196,7 @@
     .status-running  { color: #d29922; }
     .status-complete { color: #3fb950; }
     .status-error    { color: #da3633; }
+    .status-skipped  { color: #6e7681; }
 
     .score-badge {
       background: #0d1f12;
@@ -151,7 +208,7 @@
       margin-right: 12px;
     }
 
-    /* ── OUTPUT ── */
+    /* OUTPUT */
     .output-box {
       background: #161b22;
       border: 1px solid #30363d;
@@ -207,7 +264,7 @@
       margin-bottom: 8px;
     }
 
-    .si-title.green { color: #3fb950; }
+    .si-title.green  { color: #3fb950; }
     .si-title.yellow { color: #d29922; }
 
     .si-item {
@@ -216,7 +273,6 @@
       margin-bottom: 4px;
     }
 
-    /* ── LOADING DOT ── */
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.2; }
@@ -228,19 +284,47 @@
   <div class="container">
 
     <h1>🤖 Autonomous Agent</h1>
-    <p class="subtitle">Multi-agent pipeline: Research → Summary → Critique</p>
+    <p class="subtitle">Research · Teach · Code · Image Analysis — powered by real web search</p>
 
-    <!-- INPUT -->
+    <!-- TEXT INPUT -->
     <div class="input-row">
       <input
         type="text"
         id="topicInput"
-        placeholder="Ask anything — e.g. AI in healthcare, quantum computing..."
+        placeholder="Ask anything, request code, ask to teach, or upload an image..."
       />
-      <button id="runBtn" onclick="runPipeline()">Run Pipeline</button>
+      <button id="runBtn" onclick="handleRun()">Run</button>
     </div>
 
-    <!-- AGENT CARDS -->
+    <!-- IMAGE UPLOAD -->
+    <div class="image-section">
+      <div class="image-actions">
+        <input
+          type="file"
+          id="imageInput"
+          accept="image/*"
+          style="display:none"
+          onchange="handleImageUpload(event)"
+        />
+        <button class="btn-upload" onclick="document.getElementById('imageInput').click()">
+          📷 Upload Image
+        </button>
+        <span class="image-status" id="imageStatus">No image selected</span>
+      </div>
+
+      <div class="image-preview" id="imagePreview">
+        <img id="previewImg" src="" alt="Preview"/>
+        <br/>
+        <button class="btn-remove" onclick="clearImage()" style="margin-top:8px;">
+          ✕ Remove Image
+        </button>
+      </div>
+    </div>
+
+    <!-- INTENT BADGE -->
+    <div class="intent-badge" id="intentBadge"></div>
+
+    <!-- AGENT PIPELINE -->
     <p class="pipeline-title">Agent Pipeline</p>
     <div class="agents">
 
@@ -249,10 +333,43 @@
           <div class="agent-icon">🔍</div>
           <div>
             <div class="agent-name">Research Agent</div>
-            <div class="agent-desc">Gathers information on your topic</div>
+            <div class="agent-desc">Searches the web for real live data</div>
           </div>
         </div>
         <span class="agent-status status-idle" id="status-research">Idle</span>
+      </div>
+
+      <div class="agent-card" id="card-teach">
+        <div class="agent-left">
+          <div class="agent-icon">📚</div>
+          <div>
+            <div class="agent-name">Teach Agent</div>
+            <div class="agent-desc">Explains topics step by step</div>
+          </div>
+        </div>
+        <span class="agent-status status-idle" id="status-teach">Idle</span>
+      </div>
+
+      <div class="agent-card" id="card-code">
+        <div class="agent-left">
+          <div class="agent-icon">💻</div>
+          <div>
+            <div class="agent-name">Code Agent</div>
+            <div class="agent-desc">Writes clean working code</div>
+          </div>
+        </div>
+        <span class="agent-status status-idle" id="status-code">Idle</span>
+      </div>
+
+      <div class="agent-card" id="card-image">
+        <div class="agent-left">
+          <div class="agent-icon">🖼️</div>
+          <div>
+            <div class="agent-name">Image Agent</div>
+            <div class="agent-desc">Analyzes uploaded images</div>
+          </div>
+        </div>
+        <span class="agent-status status-idle" id="status-image">Idle</span>
       </div>
 
       <div class="agent-card" id="card-summary">
@@ -285,7 +402,7 @@
     <!-- OUTPUT -->
     <div class="output-box" id="outputBox">
       <div class="output-header">
-        <span class="output-title">Final Output</span>
+        <span class="output-title">Output</span>
         <span class="quality-score" id="qualityScore"></span>
       </div>
       <div class="output-text" id="outputText"></div>
@@ -304,15 +421,40 @@
   </div>
 
   <script>
-    // ── HELPERS ──────────────────────────────────────────────
+    // ── STATE ─────────────────────────────────────────────────
+    let currentImageBase64 = null
 
-    // Sets an agent card to: idle / running / complete / error
+    // ── IMAGE FUNCTIONS ───────────────────────────────────────
+    function handleImageUpload(event) {
+      const file = event.target.files[0]
+      if (!file) return
+
+      document.getElementById('imageStatus').textContent = `📷 ${file.name}`
+
+      const reader = new FileReader()
+      reader.onload = function(e) {
+        const fullBase64 = e.target.result
+        currentImageBase64 = fullBase64.split(',')[1]
+        document.getElementById('previewImg').src = fullBase64
+        document.getElementById('imagePreview').style.display = 'block'
+      }
+      reader.readAsDataURL(file)
+    }
+
+    function clearImage() {
+      currentImageBase64 = null
+      document.getElementById('imageStatus').textContent = 'No image selected'
+      document.getElementById('imagePreview').style.display = 'none'
+      document.getElementById('imageInput').value = ''
+    }
+
+    // ── AGENT STATUS HELPERS ──────────────────────────────────
     function setAgent(name, state, score) {
       const card = document.getElementById(`card-${name}`)
       const status = document.getElementById(`status-${name}`)
+      if (!card || !status) return
 
-      // Remove all state classes
-      card.classList.remove('running', 'complete', 'error')
+      card.classList.remove('running', 'complete', 'error', 'skipped')
 
       if (state === 'running') {
         card.classList.add('running')
@@ -322,6 +464,10 @@
         card.classList.add('complete')
         status.className = 'agent-status status-complete'
         status.textContent = '✓ Done'
+      } else if (state === 'skipped') {
+        card.classList.add('skipped')
+        status.className = 'agent-status status-skipped'
+        status.textContent = 'Skipped'
       } else if (state === 'error') {
         card.classList.add('error')
         status.className = 'agent-status status-error'
@@ -331,7 +477,6 @@
         status.textContent = 'Idle'
       }
 
-      // Show score badge on critic card
       if (name === 'critic' && score) {
         const badge = document.getElementById('score-badge')
         badge.textContent = `Score: ${score}/10`
@@ -339,111 +484,168 @@
       }
     }
 
-    // Reset everything to idle before a new run
     function resetAll() {
-      ['research', 'summary', 'critic'].forEach(a => setAgent(a, 'idle'))
+      ['research', 'teach', 'code', 'image', 'summary', 'critic'].forEach(a => setAgent(a, 'idle'))
       document.getElementById('score-badge').style.display = 'none'
       document.getElementById('outputBox').classList.remove('visible')
       document.getElementById('siBox').style.display = 'none'
+      document.getElementById('intentBadge').style.display = 'none'
     }
 
-    // ── MAIN FUNCTION ─────────────────────────────────────────
-    // This is called when you click "Run Pipeline"
+    function showIntent(intent) {
+      const badge = document.getElementById('intentBadge')
+      const labels = {
+        research:   '🔍 Research Mode',
+        teaching:   '📚 Teaching Mode',
+        coding:     '💻 Coding Mode',
+        comparison: '⚖️ Comparison Mode',
+        image:      '🖼️ Image Analysis Mode'
+      }
+      badge.textContent = labels[intent] || intent
+      badge.className = `intent-badge intent-${intent}`
+      badge.style.display = 'block'
+    }
 
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms))
+    }
+
+    // ── MAIN HANDLER ──────────────────────────────────────────
+    function handleRun() {
+      if (currentImageBase64) {
+        analyzeImage()
+      } else {
+        runPipeline()
+      }
+    }
+
+    // ── IMAGE ANALYSIS ────────────────────────────────────────
+    async function analyzeImage() {
+      const question = document.getElementById('topicInput').value || 'Describe this image in detail.'
+      const btn = document.getElementById('runBtn')
+      btn.disabled = true
+      btn.textContent = 'Analyzing...'
+
+      resetAll()
+      showIntent('image')
+      setAgent('image', 'running')
+
+      try {
+        const response = await fetch('http://127.0.0.1:8000/analyze-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image_base64: currentImageBase64,
+            question: question
+          })
+        })
+
+        if (!response.ok) throw new Error(`Server error: ${response.status}`)
+
+        const data = await response.json()
+        setAgent('image', 'complete')
+
+        document.getElementById('outputText').textContent = data.analysis
+        document.getElementById('qualityScore').textContent = ''
+        document.getElementById('outputBox').classList.add('visible')
+
+      } catch (err) {
+        setAgent('image', 'error')
+        alert('Error: ' + err.message)
+      }
+
+      btn.disabled = false
+      btn.textContent = 'Run'
+    }
+
+    // ── TEXT PIPELINE ─────────────────────────────────────────
     async function runPipeline() {
       const topic = document.getElementById('topicInput').value.trim()
-
-      // Don't run if empty
       if (!topic) {
         alert('Please enter a topic first!')
         return
       }
 
-      // Disable button so you can't click twice
       const btn = document.getElementById('runBtn')
       btn.disabled = true
       btn.textContent = 'Running...'
 
       resetAll()
+      setAgent('research', 'running')
 
       try {
-        // ── STEP 1: Show research is running ──
-        setAgent('research', 'running')
-
-        // Send request to YOUR FastAPI backend
-        // fetch() is the browser's built-in way to make HTTP requests
         const response = await fetch('http://127.0.0.1:8000/run', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic: topic })  // sends {"topic": "your text"}
+          body: JSON.stringify({ topic: topic })
         })
 
-        // ── STEP 2: Check for errors ──
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`)
+        if (!response.ok) throw new Error(`Server error: ${response.status}`)
+
+        const data = await response.json()
+        const intent = data.intent || 'research'
+        showIntent(intent)
+
+        // Animate agents based on which pipeline ran
+        if (intent === 'teaching') {
+          setAgent('research', 'skipped')
+          setAgent('code', 'skipped')
+          setAgent('image', 'skipped')
+          setAgent('teach', 'running')
+          await wait(500)
+          setAgent('teach', 'complete')
+          setAgent('summary', 'skipped')
+
+        } else if (intent === 'coding') {
+          setAgent('research', 'skipped')
+          setAgent('teach', 'skipped')
+          setAgent('image', 'skipped')
+          setAgent('code', 'running')
+          await wait(500)
+          setAgent('code', 'complete')
+          setAgent('summary', 'skipped')
+
+        } else {
+          setAgent('teach', 'skipped')
+          setAgent('code', 'skipped')
+          setAgent('image', 'skipped')
+          setAgent('research', 'complete')
+          await wait(300)
+          setAgent('summary', 'running')
+          await wait(500)
+          setAgent('summary', 'complete')
         }
 
-        // Parse the JSON response from your backend
-        const data = await response.json()
-
-        // ── STEP 3: Update agent cards as if they ran in sequence ──
-        // (they already ran on the backend — we're just showing it)
-        setAgent('research', 'complete')
-        await wait(400)   // small delay so it feels like steps
-
-        setAgent('summary', 'running')
-        await wait(400)
-        setAgent('summary', 'complete')
-        await wait(400)
-
+        await wait(300)
         setAgent('critic', 'running')
         await wait(400)
-
-        const evaluation = data.final_evaluation
-        const score = evaluation?.overall_score ?? '?'
+        const score = data.final_evaluation?.overall_score ?? '?'
         setAgent('critic', 'complete', score)
 
-        // ── STEP 4: Show the final output ──
         document.getElementById('qualityScore').textContent = `Quality: ${score}/10`
         document.getElementById('outputText').textContent = data.final_output
         document.getElementById('outputBox').classList.add('visible')
 
-        // ── STEP 5: Show strengths and improvements if available ──
+        const evaluation = data.final_evaluation
         if (evaluation?.strengths?.length || evaluation?.improvements?.length) {
-          const sList = document.getElementById('strengthsList')
-          const iList = document.getElementById('improvementsList')
-
-          sList.innerHTML = (evaluation.strengths || [])
-            .map(s => `<div class="si-item">• ${s}</div>`).join('')
-
-          iList.innerHTML = (evaluation.improvements || [])
-            .map(i => `<div class="si-item">• ${i}</div>`).join('')
-
+          document.getElementById('strengthsList').innerHTML =
+            (evaluation.strengths || []).map(s => `<div class="si-item">• ${s}</div>`).join('')
+          document.getElementById('improvementsList').innerHTML =
+            (evaluation.improvements || []).map(i => `<div class="si-item">• ${i}</div>`).join('')
           document.getElementById('siBox').style.display = 'grid'
         }
 
       } catch (err) {
-        // Something went wrong — show error on all cards
-        setAgent('research', 'error')
-        setAgent('summary', 'error')
-        setAgent('critic', 'error')
+        ['research', 'teach', 'code', 'summary', 'critic'].forEach(a => setAgent(a, 'error'))
         alert('Error: ' + err.message)
       }
 
-      // Re-enable button
       btn.disabled = false
-      btn.textContent = 'Run Pipeline'
+      btn.textContent = 'Run'
     }
 
-    // Small helper: wait N milliseconds
-    // Used to create the step-by-step visual effect
-    function wait(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms))
-    }
-
-    // Allow pressing Enter in the input to run
     document.getElementById('topicInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') runPipeline()
+      if (e.key === 'Enter') handleRun()
     })
   </script>
 </body>
