@@ -248,6 +248,60 @@
       padding-left: 16px;
     }
 
+    /* STAR RATING */
+    .rating-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #21262d;
+    }
+
+    .rating-label {
+      font-size: 12px;
+      color: #6e7681;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .stars-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .star {
+      font-size: 28px;
+      color: #30363d;
+      cursor: pointer;
+      transition: color 0.2s, transform 0.1s;
+    }
+
+    .star:hover { color: #e3b341; transform: scale(1.2); }
+    .star.selected { color: #e3b341; }
+
+    .comment-input {
+      flex: 1;
+      padding: 6px 12px;
+      font-size: 13px;
+      min-width: 150px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      outline: none;
+    }
+
+    .comment-input:focus { border-color: #58a6ff; }
+
+    .rating-status {
+      font-size: 13px;
+      color: #3fb950;
+      margin-top: 8px;
+      min-height: 20px;
+    }
+
+    /* STRENGTHS / IMPROVEMENTS */
     .strengths-improvements {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -273,6 +327,41 @@
       margin-bottom: 4px;
     }
 
+    /* RL STATS BAR */
+    .rl-stats {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    .rl-stats.visible { display: block; }
+
+    .rl-stats-title {
+      font-size: 12px;
+      color: #6e7681;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .rl-stats-row {
+      display: flex;
+      gap: 24px;
+    }
+
+    .rl-stat {
+      font-size: 13px;
+      color: #8b949e;
+    }
+
+    .rl-stat span {
+      color: #e3b341;
+      font-weight: 700;
+    }
+
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.2; }
@@ -284,7 +373,18 @@
   <div class="container">
 
     <h1>🤖 Autonomous Agent</h1>
-    <p class="subtitle">Research · Teach · Code · Image Analysis — powered by real web search</p>
+    <p class="subtitle">Research · Teach · Code · Image Analysis — powered by real web search + RL feedback</p>
+
+    <!-- RL STATS BAR -->
+    <div class="rl-stats" id="rlStats">
+      <p class="rl-stats-title">🧠 RL Learning Stats</p>
+      <div class="rl-stats-row">
+        <div class="rl-stat">Total Ratings: <span id="statTotal">0</span></div>
+        <div class="rl-stat">Avg Rating: <span id="statAvg">0</span>/5</div>
+        <div class="rl-stat">High Quality: <span id="statBest">0</span></div>
+        <div class="rl-stat">Needs Work: <span id="statWorst">0</span></div>
+      </div>
+    </div>
 
     <!-- TEXT INPUT -->
     <div class="input-row">
@@ -311,7 +411,6 @@
         </button>
         <span class="image-status" id="imageStatus">No image selected</span>
       </div>
-
       <div class="image-preview" id="imagePreview">
         <img id="previewImg" src="" alt="Preview"/>
         <br/>
@@ -405,7 +504,29 @@
         <span class="output-title">Output</span>
         <span class="quality-score" id="qualityScore"></span>
       </div>
+
       <div class="output-text" id="outputText"></div>
+
+      <!-- STAR RATING -->
+      <div class="rating-section">
+        <p class="rating-label">Rate this response — helps the agent learn</p>
+        <div class="stars-row">
+          <span class="star" onclick="rate(1)">★</span>
+          <span class="star" onclick="rate(2)">★</span>
+          <span class="star" onclick="rate(3)">★</span>
+          <span class="star" onclick="rate(4)">★</span>
+          <span class="star" onclick="rate(5)">★</span>
+          <input
+            type="text"
+            class="comment-input"
+            id="commentInput"
+            placeholder="Optional comment..."
+          />
+        </div>
+        <p class="rating-status" id="ratingStatus"></p>
+      </div>
+
+      <!-- STRENGTHS / IMPROVEMENTS -->
       <div class="strengths-improvements" id="siBox" style="display:none">
         <div>
           <div class="si-title green">✓ Strengths</div>
@@ -423,14 +544,24 @@
   <script>
     // ── STATE ─────────────────────────────────────────────────
     let currentImageBase64 = null
+    let currentRating = 0
+
+    // ── LOAD RL STATS ON PAGE LOAD ────────────────────────────
+    window.onload = async function() {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/feedback/stats')
+        const data = await res.json()
+        if (data.total > 0) updateRLStats(data)
+      } catch (e) {
+        // API not running yet — ignore
+      }
+    }
 
     // ── IMAGE FUNCTIONS ───────────────────────────────────────
     function handleImageUpload(event) {
       const file = event.target.files[0]
       if (!file) return
-
       document.getElementById('imageStatus').textContent = `📷 ${file.name}`
-
       const reader = new FileReader()
       reader.onload = function(e) {
         const fullBase64 = e.target.result
@@ -453,9 +584,7 @@
       const card = document.getElementById(`card-${name}`)
       const status = document.getElementById(`status-${name}`)
       if (!card || !status) return
-
       card.classList.remove('running', 'complete', 'error', 'skipped')
-
       if (state === 'running') {
         card.classList.add('running')
         status.className = 'agent-status status-running blink'
@@ -476,7 +605,6 @@
         status.className = 'agent-status status-idle'
         status.textContent = 'Idle'
       }
-
       if (name === 'critic' && score) {
         const badge = document.getElementById('score-badge')
         badge.textContent = `Score: ${score}/10`
@@ -490,6 +618,9 @@
       document.getElementById('outputBox').classList.remove('visible')
       document.getElementById('siBox').style.display = 'none'
       document.getElementById('intentBadge').style.display = 'none'
+      document.getElementById('ratingStatus').textContent = ''
+      document.querySelectorAll('.star').forEach(s => s.classList.remove('selected'))
+      currentRating = 0
     }
 
     function showIntent(intent) {
@@ -510,6 +641,53 @@
       return new Promise(resolve => setTimeout(resolve, ms))
     }
 
+    // ── RL STATS ──────────────────────────────────────────────
+    function updateRLStats(stats) {
+      document.getElementById('statTotal').textContent = stats.total
+      document.getElementById('statAvg').textContent = stats.average_rating
+      document.getElementById('statBest').textContent = stats.best_count
+      document.getElementById('statWorst').textContent = stats.worst_count
+      document.getElementById('rlStats').classList.add('visible')
+    }
+
+    // ── STAR RATING ───────────────────────────────────────────
+    function rate(stars) {
+      currentRating = stars
+      document.querySelectorAll('.star').forEach((star, index) => {
+        if (index < stars) {
+          star.classList.add('selected')
+        } else {
+          star.classList.remove('selected')
+        }
+      })
+      submitFeedback(stars)
+    }
+
+    async function submitFeedback(rating) {
+      const topic = document.getElementById('topicInput').value
+      const response = document.getElementById('outputText').textContent
+      const comment = document.getElementById('commentInput').value
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: topic,
+            response: response,
+            rating: rating,
+            comment: comment
+          })
+        })
+        const data = await res.json()
+        document.getElementById('ratingStatus').textContent =
+          `✓ Saved! Agent is learning... Avg rating: ${data.stats.average_rating}/5 from ${data.stats.total} responses`
+        updateRLStats(data.stats)
+      } catch (err) {
+        document.getElementById('ratingStatus').textContent = 'Could not save rating'
+      }
+    }
+
     // ── MAIN HANDLER ──────────────────────────────────────────
     function handleRun() {
       if (currentImageBase64) {
@@ -525,7 +703,6 @@
       const btn = document.getElementById('runBtn')
       btn.disabled = true
       btn.textContent = 'Analyzing...'
-
       resetAll()
       showIntent('image')
       setAgent('image', 'running')
@@ -539,16 +716,12 @@
             question: question
           })
         })
-
         if (!response.ok) throw new Error(`Server error: ${response.status}`)
-
         const data = await response.json()
         setAgent('image', 'complete')
-
         document.getElementById('outputText').textContent = data.analysis
         document.getElementById('qualityScore').textContent = ''
         document.getElementById('outputBox').classList.add('visible')
-
       } catch (err) {
         setAgent('image', 'error')
         alert('Error: ' + err.message)
@@ -569,7 +742,6 @@
       const btn = document.getElementById('runBtn')
       btn.disabled = true
       btn.textContent = 'Running...'
-
       resetAll()
       setAgent('research', 'running')
 
@@ -579,14 +751,11 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ topic: topic })
         })
-
         if (!response.ok) throw new Error(`Server error: ${response.status}`)
-
         const data = await response.json()
         const intent = data.intent || 'research'
         showIntent(intent)
 
-        // Animate agents based on which pipeline ran
         if (intent === 'teaching') {
           setAgent('research', 'skipped')
           setAgent('code', 'skipped')
@@ -595,7 +764,6 @@
           await wait(500)
           setAgent('teach', 'complete')
           setAgent('summary', 'skipped')
-
         } else if (intent === 'coding') {
           setAgent('research', 'skipped')
           setAgent('teach', 'skipped')
@@ -604,7 +772,6 @@
           await wait(500)
           setAgent('code', 'complete')
           setAgent('summary', 'skipped')
-
         } else {
           setAgent('teach', 'skipped')
           setAgent('code', 'skipped')
