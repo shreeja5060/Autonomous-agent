@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Autonomous Agent</title>
+  <style>
+    /* ── RESET & BASE ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0e14;
+      color: #c9d1d9;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* ── HEADER ── */
+    h1 {
+      font-size: 24px;
+      color: #58a6ff;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #6e7681;
+      margin-bottom: 32px;
+    }
+
+    /* ── INPUT BOX ── */
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    input {
+      flex: 1;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #c9d1d9;
+      font-size: 15px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    input:focus {
+      border-color: #58a6ff;
+    }
+
+    button {
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    button:hover { background: #2ea043; }
+    button:disabled { background: #21262d; color: #6e7681; cursor: not-allowed; }
+
+    /* ── AGENT PIPELINE ── */
+    .pipeline-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6e7681;
+      margin-bottom: 12px;
+    }
+
+    .agents {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .agent-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    /* status colors */
+    .agent-card.running  { border-color: #d29922; background: #1c1810; }
+    .agent-card.complete { border-color: #238636; background: #0d1f12; }
+    .agent-card.error    { border-color: #da3633; background: #1f0d0d; }
+
+    .agent-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .agent-icon {
+      font-size: 18px;
+      width: 28px;
+      text-align: center;
+    }
+
+    .agent-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e6edf3;
+    }
+
+    .agent-desc {
+      font-size: 12px;
+      color: #6e7681;
+      margin-top: 2px;
+    }
+
+    .agent-status {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .status-idle     { color: #6e7681; }
+    .status-running  { color: #d29922; }
+    .status-complete { color: #3fb950; }
+    .status-error    { color: #da3633; }
+
+    .score-badge {
+      background: #0d1f12;
+      border: 1px solid #238636;
+      color: #3fb950;
+      font-size: 12px;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-right: 12px;
+    }
+
+    /* ── OUTPUT ── */
+    .output-box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 20px;
+      display: none;
+    }
+
+    .output-box.visible { display: block; }
+
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .output-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6e7681;
+    }
+
+    .quality-score {
+      font-size: 14px;
+      font-weight: 700;
+      color: #3fb950;
+    }
+
+    .output-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #c9d1d9;
+      white-space: pre-wrap;
+      border-left: 3px solid #58a6ff;
+      padding-left: 16px;
+    }
+
+    .strengths-improvements {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #21262d;
+    }
+
+    .si-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .si-title.green { color: #3fb950; }
+    .si-title.yellow { color: #d29922; }
+
+    .si-item {
+      font-size: 13px;
+      color: #8b949e;
+      margin-bottom: 4px;
+    }
+
+    /* ── LOADING DOT ── */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+    .blink { animation: blink 1s infinite; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h1>🤖 Autonomous Agent</h1>
+    <p class="subtitle">Multi-agent pipeline: Research → Summary → Critique</p>
+
+    <!-- INPUT -->
+    <div class="input-row">
+      <input
+        type="text"
+        id="topicInput"
+        placeholder="Ask anything — e.g. AI in healthcare, quantum computing..."
+      />
+      <button id="runBtn" onclick="runPipeline()">Run Pipeline</button>
+    </div>
+
+    <!-- AGENT CARDS -->
+    <p class="pipeline-title">Agent Pipeline</p>
+    <div class="agents">
+
+      <div class="agent-card" id="card-research">
+        <div class="agent-left">
+          <div class="agent-icon">🔍</div>
+          <div>
+            <div class="agent-name">Research Agent</div>
+            <div class="agent-desc">Gathers information on your topic</div>
+          </div>
+        </div>
+        <span class="agent-status status-idle" id="status-research">Idle</span>
+      </div>
+
+      <div class="agent-card" id="card-summary">
+        <div class="agent-left">
+          <div class="agent-icon">📝</div>
+          <div>
+            <div class="agent-name">Summary Agent</div>
+            <div class="agent-desc">Condenses research into clear insights</div>
+          </div>
+        </div>
+        <span class="agent-status status-idle" id="status-summary">Idle</span>
+      </div>
+
+      <div class="agent-card" id="card-critic">
+        <div class="agent-left">
+          <div class="agent-icon">⚖️</div>
+          <div>
+            <div class="agent-name">Critic Agent</div>
+            <div class="agent-desc">Scores quality and finds improvements</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center;">
+          <span class="score-badge" id="score-badge" style="display:none"></span>
+          <span class="agent-status status-idle" id="status-critic">Idle</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="output-box" id="outputBox">
+      <div class="output-header">
+        <span class="output-title">Final Output</span>
+        <span class="quality-score" id="qualityScore"></span>
+      </div>
+      <div class="output-text" id="outputText"></div>
+      <div class="strengths-improvements" id="siBox" style="display:none">
+        <div>
+          <div class="si-title green">✓ Strengths</div>
+          <div id="strengthsList"></div>
+        </div>
+        <div>
+          <div class="si-title yellow">△ Improvements</div>
+          <div id="improvementsList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ── HELPERS ──────────────────────────────────────────────
+
+    // Sets an agent card to: idle / running / complete / error
+    function setAgent(name, state, score) {
+      const card = document.getElementById(`card-${name}`)
+      const status = document.getElementById(`status-${name}`)
+
+      // Remove all state classes
+      card.classList.remove('running', 'complete', 'error')
+
+      if (state === 'running') {
+        card.classList.add('running')
+        status.className = 'agent-status status-running blink'
+        status.textContent = '● Working'
+      } else if (state === 'complete') {
+        card.classList.add('complete')
+        status.className = 'agent-status status-complete'
+        status.textContent = '✓ Done'
+      } else if (state === 'error') {
+        card.classList.add('error')
+        status.className = 'agent-status status-error'
+        status.textContent = '✗ Error'
+      } else {
+        status.className = 'agent-status status-idle'
+        status.textContent = 'Idle'
+      }
+
+      // Show score badge on critic card
+      if (name === 'critic' && score) {
+        const badge = document.getElementById('score-badge')
+        badge.textContent = `Score: ${score}/10`
+        badge.style.display = 'inline'
+      }
+    }
+
+    // Reset everything to idle before a new run
+    function resetAll() {
+      ['research', 'summary', 'critic'].forEach(a => setAgent(a, 'idle'))
+      document.getElementById('score-badge').style.display = 'none'
+      document.getElementById('outputBox').classList.remove('visible')
+      document.getElementById('siBox').style.display = 'none'
+    }
+
+    // ── MAIN FUNCTION ─────────────────────────────────────────
+    // This is called when you click "Run Pipeline"
+
+    async function runPipeline() {
+      const topic = document.getElementById('topicInput').value.trim()
+
+      // Don't run if empty
+      if (!topic) {
+        alert('Please enter a topic first!')
+        return
+      }
+
+      // Disable button so you can't click twice
+      const btn = document.getElementById('runBtn')
+      btn.disabled = true
+      btn.textContent = 'Running...'
+
+      resetAll()
+
+      try {
+        // ── STEP 1: Show research is running ──
+        setAgent('research', 'running')
+
+        // Send request to YOUR FastAPI backend
+        // fetch() is the browser's built-in way to make HTTP requests
+        const response = await fetch('http://127.0.0.1:8000/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: topic })  // sends {"topic": "your text"}
+        })
+
+        // ── STEP 2: Check for errors ──
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`)
+        }
+
+        // Parse the JSON response from your backend
+        const data = await response.json()
+
+        // ── STEP 3: Update agent cards as if they ran in sequence ──
+        // (they already ran on the backend — we're just showing it)
+        setAgent('research', 'complete')
+        await wait(400)   // small delay so it feels like steps
+
+        setAgent('summary', 'running')
+        await wait(400)
+        setAgent('summary', 'complete')
+        await wait(400)
+
+        setAgent('critic', 'running')
+        await wait(400)
+
+        const evaluation = data.final_evaluation
+        const score = evaluation?.overall_score ?? '?'
+        setAgent('critic', 'complete', score)
+
+        // ── STEP 4: Show the final output ──
+        document.getElementById('qualityScore').textContent = `Quality: ${score}/10`
+        document.getElementById('outputText').textContent = data.final_output
+        document.getElementById('outputBox').classList.add('visible')
+
+        // ── STEP 5: Show strengths and improvements if available ──
+        if (evaluation?.strengths?.length || evaluation?.improvements?.length) {
+          const sList = document.getElementById('strengthsList')
+          const iList = document.getElementById('improvementsList')
+
+          sList.innerHTML = (evaluation.strengths || [])
+            .map(s => `<div class="si-item">• ${s}</div>`).join('')
+
+          iList.innerHTML = (evaluation.improvements || [])
+            .map(i => `<div class="si-item">• ${i}</div>`).join('')
+
+          document.getElementById('siBox').style.display = 'grid'
+        }
+
+      } catch (err) {
+        // Something went wrong — show error on all cards
+        setAgent('research', 'error')
+        setAgent('summary', 'error')
+        setAgent('critic', 'error')
+        alert('Error: ' + err.message)
+      }
+
+      // Re-enable button
+      btn.disabled = false
+      btn.textContent = 'Run Pipeline'
+    }
+
+    // Small helper: wait N milliseconds
+    // Used to create the step-by-step visual effect
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms))
+    }
+
+    // Allow pressing Enter in the input to run
+    document.getElementById('topicInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') runPipeline()
+    })
+  </script>
+</body>
+</html>
