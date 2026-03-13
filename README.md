@@ -93,6 +93,9 @@ Tested across 5 diverse research queries on local environment.
 | Average Quality Score | 8.0 / 10 |
 | Fastest Response | 2.43 seconds |
 | Slowest Response | 6.31 seconds |
+| Evaluation Method | LLM-as-judge (CriticAgent) |
+| Human Feedback | Star ratings (1-5) via RLHF loop |
+| Models Evaluated | LLaMA 3.3 70B + LLaMA 4 Scout |
 
 | Query | Score | Latency |
 |-------|-------|---------|
