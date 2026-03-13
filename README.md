@@ -5,11 +5,13 @@
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green)
 ![Groq](https://img.shields.io/badge/Groq-LLaMA%203.3%2070B-orange)
+![Docker](https://img.shields.io/badge/Docker-Hub-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ## 🚀 Live Demo
 **API:** https://autonomous-agent-38cl.onrender.com/docs
 **Frontend:** https://shreeja5060.github.io/Autonomous-agent/frontend.html
+**Docker Hub:** https://hub.docker.com/r/shreeja5060/autonomous-agent
 **GitHub:** https://github.com/shreeja5060/Autonomous-agent
 
 > ⚠️ First request may take 30-60 seconds — free tier server sleeps when inactive.
@@ -37,6 +39,7 @@ You type a question. The system figures out what you need, routes it to the righ
 | **RL Feedback Loop** | Rate responses 1-5 stars — ratings are saved and used to improve future responses |
 | **REST API** | Full FastAPI backend with auto-generated docs at `/docs` |
 | **Browser Frontend** | Clean dark UI — no installation needed, just open the HTML file |
+| **Docker** | Containerized and published to Docker Hub — run with one command |
 
 ---
 
@@ -79,6 +82,23 @@ User Query
     │  User rates 1-5 ★   │
     └─────────────────────┘
 ```
+
+---
+
+## 🐳 Docker
+
+Pull and run with one command — no cloning or building required:
+```bash
+docker run -p 8000:8000 \
+  -e GROQ_API_KEY=your_groq_key \
+  shreeja5060/autonomous-agent
+```
+
+Then open: http://localhost:8000/docs
+
+Get your free Groq API key at https://console.groq.com
+
+Verified cross-platform on Windows and MacOS.
 
 ---
 
@@ -200,6 +220,8 @@ autonomous_agent/
 │   └── task_pipeline.py     # Original pipeline
 ├── api.py                   # FastAPI backend
 ├── frontend.html            # Browser UI
+├── Dockerfile               # Docker container config
+├── .dockerignore            # Docker ignore rules
 ├── app.py                   # Original CLI entry point
 ├── memory.json              # Auto-generated memory store
 ├── feedback.json            # Auto-generated feedback store
@@ -211,30 +233,39 @@ autonomous_agent/
 
 ## ⚡ Quick Start
 
-### 1. Clone the repo
+### Option 1 — Docker (recommended)
+```bash
+docker run -p 8000:8000 \
+  -e GROQ_API_KEY=your_key \
+  shreeja5060/autonomous-agent
+```
+
+### Option 2 — Local
+
+#### 1. Clone the repo
 ```bash
 git clone https://github.com/shreeja5060/Autonomous-agent.git
 cd Autonomous-agent
 ```
 
-### 2. Install dependencies
+#### 2. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Set up environment
+#### 3. Set up environment
 Create a `.env` file in the root folder:
 ```
 GROQ_API_KEY=your_groq_api_key_here
 ```
 Get your free API key at [console.groq.com](https://console.groq.com)
 
-### 4. Start the backend
+#### 4. Start the backend
 ```bash
 uvicorn api:app --reload
 ```
 
-### 5. Open the frontend
+#### 5. Open the frontend
 Double click `frontend.html` → open with Chrome
 
 ---
@@ -247,6 +278,7 @@ Double click `frontend.html` → open with Chrome
 | `POST` | `/analyze-image` | Analyze an uploaded image |
 | `POST` | `/feedback` | Submit a star rating |
 | `GET` | `/feedback/stats` | Get RL learning statistics |
+| `GET` | `/metrics` | Get system metrics |
 
 ### Example request
 ```bash
@@ -269,6 +301,7 @@ curl -X POST https://autonomous-agent-38cl.onrender.com/run \
 | Memory | JSON file store (disk-backed) |
 | RL Feedback | JSON file store + stats tracking |
 | Deployment | Render (auto-deploy from GitHub) |
+| Container | Docker — published to Docker Hub |
 
 ---
 
@@ -283,7 +316,8 @@ curl -X POST https://autonomous-agent-38cl.onrender.com/run \
 - [x] Image analysis
 - [x] RL feedback loop
 - [x] Live deployment on Render
-- [ ] Docker containerization
+- [x] Docker containerization
+- [x] Published to Docker Hub
 - [ ] CI/CD with GitHub Actions
 - [ ] AWS migration
 - [ ] Vector database memory (ChromaDB)
