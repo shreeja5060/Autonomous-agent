@@ -8,8 +8,11 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ## 🚀 Live Demo
-**API:**  https://autonomous-agent-38cl.onrender.com/docs
+**API:** https://autonomous-agent-38cl.onrender.com/docs
 **Frontend:** https://shreeja5060.github.io/Autonomous-agent/frontend.html
+**GitHub:** https://github.com/shreeja5060/Autonomous-agent
+
+> ⚠️ First request may take 30-60 seconds — free tier server sleeps when inactive.
 
 ---
 
@@ -38,7 +41,6 @@ You type a question. The system figures out what you need, routes it to the righ
 ---
 
 ## 🏗️ Architecture
-
 ```
 User Query
     │
@@ -53,8 +55,6 @@ User Query
   ┌────▼─────┐    ┌─────▼──────┐
   │ Research │    │   Teach    │
   │  Agent   │    │   Agent    │
-  │(web search│    │(step by   │
-  │+ LLM)    │    │ step)      │
   └────┬─────┘    └─────┬──────┘
        │                │
   ┌────▼─────┐    ┌─────▼──────┐
@@ -67,23 +67,64 @@ User Query
     ┌──────────▼──────────┐
     │     CriticAgent     │
     │  Scores 0-10        │
-    │  Strengths +        │
-    │  Improvements       │
     └──────────┬──────────┘
                │
     ┌──────────▼──────────┐
     │   EpisodicMemory    │
     │   Saves to disk     │
-    │   Builds context    │
     └─────────────────────┘
                │
     ┌──────────▼──────────┐
     │    RL Feedback      │
     │  User rates 1-5 ★   │
-    │  Saved to           │
-    │  feedback.json      │
     └─────────────────────┘
 ```
+
+---
+
+## 📊 Benchmarks
+
+Tested across 5 diverse research queries on local environment.
+
+| Metric | Result |
+|--------|--------|
+| Queries Tested | 5 |
+| Average Response Time | 4.72 seconds |
+| Average Quality Score | 8.0 / 10 |
+| Fastest Response | 2.43 seconds |
+| Slowest Response | 6.31 seconds |
+
+| Query | Score | Latency |
+|-------|-------|---------|
+| What is machine learning | 8.0/10 | 6.20s |
+| What is quantum computing | 8.0/10 | 3.88s |
+| What is blockchain | 8.0/10 | 6.31s |
+| What is reinforcement learning | 8.0/10 | 4.79s |
+| What is computer vision | 8.0/10 | 2.43s |
+
+> ⚠️ Live deployment on Render free tier may have higher latency on first request due to server cold start (30-60 seconds). Subsequent requests perform similarly to local benchmarks.
+
+---
+
+## 🧠 Design Decisions
+
+**Why DuckDuckGo over Google Search?**
+DuckDuckGo's `ddgs` library requires no API key, has no rate limit for small usage, and returns clean structured results. Google Custom Search costs money and has a 100 query/day free limit. For a portfolio project DuckDuckGo is the right tradeoff.
+
+**Why max_tokens=10 for intent detection?**
+Intent detection only needs one word back — research, teaching, coding, or comparison. Setting max_tokens=10 makes the call 60x faster and cheaper than a standard 600 token call. Speed matters when this runs on every single query.
+
+**Why 2 iterations not 3?**
+Each iteration costs 3 API calls and 10-15 seconds. After 2 iterations the quality improvement is marginal — the critic scores rarely change significantly on a third attempt. 2 gives the retry benefit without tripling latency.
+
+**Why does CriticAgent return a dict instead of a string?**
+The coordinator needs to programmatically read `should_retry` and `overall_score` to make routing decisions. A string cannot be parsed reliably. A dictionary gives direct key access — `evaluation["should_retry"]` — which is safe and predictable.
+
+**Why separate agents instead of one big prompt?**
+Single responsibility makes each agent easier to debug, test, and improve independently. If the summary quality drops you fix SummaryAgent without touching ResearchAgent. This mirrors microservices architecture in production systems.
+
+**Known limitation — Leniency Bias:**
+CriticAgent uses an LLM to score responses. LLMs tend to score 7-9 regardless of actual quality due to training on human feedback that rewards positivity. This means `should_retry` rarely triggers. Detected by logging score distribution — if 95% of scores cluster around 8 the critic is not discriminating. Fix is a stricter prompt with explicit scoring criteria.
 
 ---
 
@@ -115,7 +156,6 @@ Evaluates every response on completeness, accuracy, clarity, and usefulness. Ret
 ## 🧠 Reinforcement Learning Feedback Loop
 
 After every response, you can rate it 1-5 stars with an optional comment.
-
 ```
 User rates response → saved to feedback.json
                    → average rating tracked
@@ -130,7 +170,6 @@ This creates a dataset of what good and bad responses look like for your specifi
 ## 💾 Episodic Memory
 
 Every query and response is saved to `memory.json` per topic. When you ask about the same topic again, the ResearchAgent loads the previous context and builds on it rather than starting from scratch.
-
 ```
 First query:  "AI in healthcare"  → researches from scratch → saved
 Second query: "AI in healthcare"  → loads memory → goes deeper
@@ -141,7 +180,6 @@ Memory persists across server restarts.
 ---
 
 ## 📁 Project Structure
-
 ```
 autonomous_agent/
 ├── agents/
@@ -192,8 +230,6 @@ Get your free API key at [console.groq.com](https://console.groq.com)
 ```bash
 uvicorn api:app --reload
 ```
-API runs at `http://127.0.0.1:8000`
-Auto-generated docs at `http://127.0.0.1:8000/docs`
 
 ### 5. Open the frontend
 Double click `frontend.html` → open with Chrome
@@ -211,7 +247,7 @@ Double click `frontend.html` → open with Chrome
 
 ### Example request
 ```bash
-curl -X POST http://127.0.0.1:8000/run \
+curl -X POST https://autonomous-agent-38cl.onrender.com/run \
   -H "Content-Type: application/json" \
   -d '{"topic": "explain transformers in AI"}'
 ```
@@ -229,6 +265,7 @@ curl -X POST http://127.0.0.1:8000/run \
 | Frontend | HTML, CSS, JavaScript |
 | Memory | JSON file store (disk-backed) |
 | RL Feedback | JSON file store + stats tracking |
+| Deployment | Render (auto-deploy from GitHub) |
 
 ---
 
@@ -242,13 +279,15 @@ curl -X POST http://127.0.0.1:8000/run \
 - [x] Intent detection
 - [x] Image analysis
 - [x] RL feedback loop
+- [x] Live deployment on Render
 - [ ] Docker containerization
 - [ ] CI/CD with GitHub Actions
-- [ ] Cloud deployment
+- [ ] AWS migration
+- [ ] Vector database memory (ChromaDB)
+- [ ] Fine-tuning pipeline
 
 ---
 
 ## 📄 License
 
-MIT © Shreeja 2025
-
+MIT © Shreeja 2026
