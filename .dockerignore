@@ -1,0 +1,10 @@
+```
+.env
+__pycache__
+*.pyc
+memory.json
+feedback.json
+.git
+benchmark.py
+test_search.py
+```
