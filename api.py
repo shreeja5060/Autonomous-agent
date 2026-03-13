@@ -15,6 +15,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def root():
+    return {
+        "message": "Autonomous Multi-Agent AI System",
+        "status": "running",
+        "docs": "https://autonomous-agent-38cl.onrender.com/docs",
+        "endpoints": ["/run", "/analyze-image", "/feedback", "/feedback/stats"]
+    }
+
 coordinator = CoordinatorAgent()
 image_agent = ImageAgent()
 feedback_store = FeedbackStore()
