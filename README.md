@@ -7,6 +7,10 @@
 ![Groq](https://img.shields.io/badge/Groq-LLaMA%203.3%2070B-orange)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+## 🚀 Live Demo
+**API:**  https://autonomous-agent-38cl.onrender.com/docs
+**Frontend:** https://shreeja5060.github.io/Autonomous-agent/frontend.html
+
 ---
 
 ## 🚀 What This Project Does
@@ -247,3 +251,4 @@ curl -X POST http://127.0.0.1:8000/run \
 ## 📄 License
 
 MIT © Shreeja 2025
+
