@@ -3,6 +3,7 @@ from agents.summary_agent import SummaryAgent
 from agents.critic_agent import CriticAgent
 from agents.teach_agent import TeachAgent
 from agents.code_agent import CodeAgent
+from agents.comparison_agent import ComparisonAgent
 from memory.memory_store import MemoryStore
 from groq import Groq
 import os
@@ -16,12 +17,13 @@ class CoordinatorAgent:
         self.critic_agent = CriticAgent()
         self.teach_agent = TeachAgent()
         self.code_agent = CodeAgent()
+        self.comparison_agent = ComparisonAgent()
         self.memory = MemoryStore()
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     def detect_intent(self, goal: str) -> str:
         """Ask the LLM what type of query this is"""
-        print(f"[Coordinator]  Detecting intent...")
+        print(f"[Coordinator] Detecting intent...")
 
         prompt = f"""Classify this query into exactly one of these categories:
 - research   (asking about a topic, what is X, how does X work)
@@ -40,16 +42,14 @@ Reply with ONE word only: research, teaching, coding, or comparison"""
         )
 
         intent = response.choices[0].message.content.strip().lower()
-        print(f"[Coordinator] ✓ Intent detected: {intent}")
+        print(f"[Coordinator]  Intent detected: {intent}")
 
-        # Safety check — if LLM returns something unexpected default to research
         if intent not in ["research", "teaching", "coding", "comparison"]:
             intent = "research"
 
         return intent
 
     def execute(self, goal: str, max_iterations: int = 2) -> dict:
-        # Step 1 — detect what type of query this is
         intent = self.detect_intent(goal)
 
         results = {
@@ -60,9 +60,8 @@ Reply with ONE word only: research, teaching, coding, or comparison"""
             "final_evaluation": None
         }
 
-        # Step 2 — route to the right pipeline
         if intent == "teaching":
-            print(f"[Coordinator] 📚 Routing to Teaching pipeline")
+            print(f"[Coordinator]  Routing to Teaching pipeline")
             output = self.teach_agent.run(goal)
             evaluation = self.critic_agent.evaluate(goal, output)
             results["final_output"] = output
@@ -79,8 +78,16 @@ Reply with ONE word only: research, teaching, coding, or comparison"""
             self.memory.save(goal, output)
             return results
 
+        elif intent == "comparison":
+            print(f"[Coordinator]  Routing to Comparison pipeline")
+            output = self.comparison_agent.run(goal)
+            evaluation = self.critic_agent.evaluate(goal, output)
+            results["final_output"] = output
+            results["final_evaluation"] = evaluation
+            self.memory.save(goal, output)
+            return results
+
         else:
-            # research or comparison — use existing pipeline
             print(f"[Coordinator]  Routing to Research pipeline")
             for iteration in range(max_iterations):
                 print(f"\n{'='*60}")
