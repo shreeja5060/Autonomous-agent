@@ -6,6 +6,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green)
 ![Groq](https://img.shields.io/badge/Groq-LLaMA%203.3%2070B-orange)
 ![Docker](https://img.shields.io/badge/Docker-Hub-blue)
+![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ## 🚀 Live Demo
@@ -30,7 +31,7 @@ You type a question. The system figures out what you need, routes it to the righ
 
 | Feature | Description |
 |--------|-------------|
-| **Multi-Agent Pipeline** | 6 specialized agents working in sequence |
+| **Multi-Agent Pipeline** | 7 specialized agents working in sequence |
 | **Intent Detection** | Automatically detects if you want research, teaching, code, or comparison |
 | **Real Web Search** | ResearchAgent searches DuckDuckGo for live, current data — not just model memory |
 | **Image Analysis** | Upload any image and ask questions about it using a vision model |
@@ -40,6 +41,7 @@ You type a question. The system figures out what you need, routes it to the righ
 | **REST API** | Full FastAPI backend with auto-generated docs at `/docs` |
 | **Browser Frontend** | Clean dark UI — no installation needed, just open the HTML file |
 | **Docker** | Containerized and published to Docker Hub — run with one command |
+| **CI/CD** | GitHub Actions runs tests automatically on every push |
 
 ---
 
@@ -65,6 +67,10 @@ User Query
   │  Agent   │    │   Agent    │
   └────┬─────┘    └─────┬──────┘
        │                │
+  ┌────▼─────┐    └─────┬──────┘
+  │Comparison│          │
+  │  Agent   │          │
+  └────┬─────┘          │
        └───────┬─────────┘
                │
     ┌──────────▼──────────┐
@@ -146,8 +152,8 @@ The coordinator needs to programmatically read `should_retry` and `overall_score
 **Why separate agents instead of one big prompt?**
 Single responsibility makes each agent easier to debug, test, and improve independently. If the summary quality drops you fix SummaryAgent without touching ResearchAgent. This mirrors microservices architecture in production systems.
 
-**Known limitation — Leniency Bias:**
-CriticAgent uses an LLM to score responses. LLMs tend to score 7-9 regardless of actual quality due to training on human feedback that rewards positivity. This means `should_retry` rarely triggers. Detected by logging score distribution — if 95% of scores cluster around 8 the critic is not discriminating. Fix is a stricter prompt with explicit scoring criteria.
+**Why strict scoring in CriticAgent?**
+Original implementation had leniency bias — LLMs tend to score 7-9 regardless of actual quality. Fixed by adding explicit scoring guidelines: average responses score 5-6, only exceptional responses get 8+. This makes should_retry actually trigger on poor quality responses.
 
 ---
 
@@ -168,11 +174,14 @@ Activated when you ask to learn something. Structures the response as: simple ex
 ### 5. CodeAgent
 Activated when you ask for code. Writes clean, commented, working code with explanation, example usage, and edge case notes.
 
-### 6. ImageAgent
+### 6. ComparisonAgent
+Activated when you ask to compare two things. Returns structured side by side analysis with overview, similarities, differences, when to use each, and final recommendation.
+
+### 7. ImageAgent
 Uses a multimodal vision model (`meta-llama/llama-4-scout-17b-16e-instruct`) to analyze uploaded images. You can upload any image, ask a question about it, and get a detailed analysis.
 
-### 7. CriticAgent
-Evaluates every response on completeness, accuracy, clarity, and usefulness. Returns a score out of 10, a list of strengths, and specific improvements. Can trigger a retry if quality is too low.
+### 8. CriticAgent
+Evaluates every response on completeness, accuracy, clarity, and usefulness. Returns a score out of 10, a list of strengths, and specific improvements. Uses strict scoring guidelines to avoid leniency bias. Can trigger a retry if quality is too low.
 
 ---
 
@@ -211,11 +220,17 @@ autonomous_agent/
 │   ├── summary_agent.py     # Condenses research
 │   ├── teach_agent.py       # Step-by-step teaching
 │   ├── code_agent.py        # Code generation
+│   ├── comparison_agent.py  # Side by side comparison
 │   ├── critic_agent.py      # Quality evaluation
 │   └── image_agent.py       # Vision model analysis
 ├── memory/
 │   ├── memory_store.py      # Episodic memory (disk-backed)
 │   └── feedback_store.py    # RL feedback storage
+├── tests/
+│   └── test_agents.py       # Unit tests with pytest
+├── .github/
+│   └── workflows/
+│       └── deploy.yml       # GitHub Actions CI/CD
 ├── pipelines/
 │   └── task_pipeline.py     # Original pipeline
 ├── api.py                   # FastAPI backend
@@ -270,10 +285,23 @@ Double click `frontend.html` → open with Chrome
 
 ---
 
+## 🧪 Testing
+
+Run unit tests locally:
+```bash
+pip install pytest
+pytest tests/
+```
+
+CI/CD runs automatically on every push via GitHub Actions.
+
+---
+
 ## 📡 API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| `GET` | `/` | Project info and status |
 | `POST` | `/run` | Run the full agent pipeline |
 | `POST` | `/analyze-image` | Analyze an uploaded image |
 | `POST` | `/feedback` | Submit a star rating |
@@ -302,6 +330,8 @@ curl -X POST https://autonomous-agent-38cl.onrender.com/run \
 | RL Feedback | JSON file store + stats tracking |
 | Deployment | Render (auto-deploy from GitHub) |
 | Container | Docker — published to Docker Hub |
+| CI/CD | GitHub Actions — auto test on push |
+| Testing | pytest |
 
 ---
 
@@ -318,9 +348,13 @@ curl -X POST https://autonomous-agent-38cl.onrender.com/run \
 - [x] Live deployment on Render
 - [x] Docker containerization
 - [x] Published to Docker Hub
-- [ ] CI/CD with GitHub Actions
-- [ ] AWS migration
+- [x] ComparisonAgent
+- [x] Unit tests with pytest
+- [x] CI/CD with GitHub Actions
+- [x] Leniency bias fixed
 - [ ] Vector database memory (ChromaDB)
+- [ ] Async pipeline
+- [ ] AWS migration
 - [ ] Fine-tuning pipeline
 
 ---
