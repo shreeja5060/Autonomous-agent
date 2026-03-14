@@ -7,4 +7,5 @@ feedback.json
 .git
 benchmark.py
 test_search.py
+chroma_db
 ```
