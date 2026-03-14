@@ -35,7 +35,7 @@ You type a question. The system figures out what you need, routes it to the righ
 | **Intent Detection** | Automatically detects if you want research, teaching, code, or comparison |
 | **Real Web Search** | ResearchAgent searches DuckDuckGo for live, current data — not just model memory |
 | **Image Analysis** | Upload any image and ask questions about it using a vision model |
-| **Episodic Memory** | Remembers past conversations and builds on them across sessions |
+| **Vector Memory** | ChromaDB semantic search — finds similar past research not just exact matches |
 | **Self Evaluation** | CriticAgent scores every response 0-10 with strengths and improvements |
 | **RL Feedback Loop** | Rate responses 1-5 stars — ratings are saved and used to improve future responses |
 | **REST API** | Full FastAPI backend with auto-generated docs at `/docs` |
@@ -79,8 +79,8 @@ User Query
     └──────────┬──────────┘
                │
     ┌──────────▼──────────┐
-    │   EpisodicMemory    │
-    │   Saves to disk     │
+    │   ChromaDB Vector   │
+    │   Semantic Memory   │
     └─────────────────────┘
                │
     ┌──────────▼──────────┐
@@ -155,6 +155,9 @@ Single responsibility makes each agent easier to debug, test, and improve indepe
 **Why strict scoring in CriticAgent?**
 Original implementation had leniency bias — LLMs tend to score 7-9 regardless of actual quality. Fixed by adding explicit scoring guidelines: average responses score 5-6, only exceptional responses get 8+. This makes should_retry actually trigger on poor quality responses.
 
+**Why ChromaDB over JSON memory?**
+JSON memory only matches exact topic strings — "AI healthcare" would not match "AI in medicine." ChromaDB uses vector embeddings and cosine similarity to find semantically similar past research. This means the agent recalls relevant context even when the query is phrased differently.
+
 ---
 
 ## 🤖 Agent Descriptions
@@ -163,7 +166,7 @@ Original implementation had leniency bias — LLMs tend to score 7-9 regardless 
 The brain of the system. Reads your query and decides which pipeline to run. Uses the LLM to classify intent into: `research`, `teaching`, `coding`, or `comparison`. Routes to the right agents automatically.
 
 ### 2. ResearchAgent
-Searches DuckDuckGo for real, live web results. Passes those results to the LLM which reasons over actual current data — not outdated training memory. Also checks episodic memory for past context on the same topic and builds on it.
+Searches DuckDuckGo for real, live web results. Passes those results to the LLM which reasons over actual current data — not outdated training memory. Also checks ChromaDB vector memory for semantically similar past research and builds on it.
 
 ### 3. SummaryAgent
 Takes raw research output and condenses it into a clear, structured, actionable executive summary. Focuses on key takeaways and practical insights.
@@ -199,12 +202,14 @@ This creates a dataset of what good and bad responses look like for your specifi
 
 ---
 
-## 💾 Episodic Memory
+## 💾 Vector Memory (ChromaDB)
 
-Every query and response is saved to `memory.json` per topic. When you ask about the same topic again, the ResearchAgent loads the previous context and builds on it rather than starting from scratch.
+Every query and response is saved to a ChromaDB vector database. When you ask about a similar topic again, the ResearchAgent uses semantic search to find relevant past research — not just exact keyword matching.
 ```
-First query:  "AI in healthcare"  → researches from scratch → saved
-Second query: "AI in healthcare"  → loads memory → goes deeper
+First query:  "AI in healthcare"     → saved to ChromaDB
+Second query: "AI in medicine"       → semantic search finds
+                                       "AI in healthcare" match
+                                     → builds on past research
 ```
 
 Memory persists across server restarts.
@@ -224,7 +229,8 @@ autonomous_agent/
 │   ├── critic_agent.py      # Quality evaluation
 │   └── image_agent.py       # Vision model analysis
 ├── memory/
-│   ├── memory_store.py      # Episodic memory (disk-backed)
+│   ├── vector_memory.py     # ChromaDB semantic memory
+│   ├── memory_store.py      # Original JSON memory (kept for reference)
 │   └── feedback_store.py    # RL feedback storage
 ├── tests/
 │   └── test_agents.py       # Unit tests with pytest
@@ -233,12 +239,12 @@ autonomous_agent/
 │       └── deploy.yml       # GitHub Actions CI/CD
 ├── pipelines/
 │   └── task_pipeline.py     # Original pipeline
+├── chroma_db/               # Auto-generated vector database
 ├── api.py                   # FastAPI backend
 ├── frontend.html            # Browser UI
 ├── Dockerfile               # Docker container config
 ├── .dockerignore            # Docker ignore rules
 ├── app.py                   # Original CLI entry point
-├── memory.json              # Auto-generated memory store
 ├── feedback.json            # Auto-generated feedback store
 ├── requirements.txt
 └── .env                     # Your API keys (never commit this)
@@ -326,7 +332,7 @@ curl -X POST https://autonomous-agent-38cl.onrender.com/run \
 | Web Search | DuckDuckGo Search (ddgs) |
 | Backend | FastAPI + Uvicorn |
 | Frontend | HTML, CSS, JavaScript |
-| Memory | JSON file store (disk-backed) |
+| Vector Memory | ChromaDB (semantic search) |
 | RL Feedback | JSON file store + stats tracking |
 | Deployment | Render (auto-deploy from GitHub) |
 | Container | Docker — published to Docker Hub |
@@ -352,7 +358,7 @@ curl -X POST https://autonomous-agent-38cl.onrender.com/run \
 - [x] Unit tests with pytest
 - [x] CI/CD with GitHub Actions
 - [x] Leniency bias fixed
-- [ ] Vector database memory (ChromaDB)
+- [x] Vector database memory (ChromaDB)
 - [ ] Async pipeline
 - [ ] AWS migration
 - [ ] Fine-tuning pipeline
