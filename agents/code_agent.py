@@ -8,7 +8,7 @@ class CodeAgent:
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     def run(self, task: str) -> str:
-        print(f"[CodeAgent] 💻 Writing code for: {task}")
+        print(f"[CodeAgent]  Writing code for: {task}")
 
         prompt = f"""You are an expert programmer. Write clean working code for this task.
 
@@ -29,9 +29,9 @@ Write production quality code."""
                 max_tokens=800,
             )
             result = response.choices[0].message.content
-            print(f"[CodeAgent] ✓ Code complete!")
+            print(f"[CodeAgent]  Code complete!")
             return result
 
         except Exception as e:
-            print(f"[CodeAgent] ✗ Error: {e}")
+            print(f"[CodeAgent]  Error: {e}")
             return f"Error: {e}"

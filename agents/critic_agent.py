@@ -61,7 +61,7 @@ Return ONLY valid JSON in this format:
             
             response_text = chat_completion.choices[0].message.content
             
-            # Clean JSON if wrapped in markdown
+           
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0].strip()
             elif "```" in response_text:
@@ -69,12 +69,12 @@ Return ONLY valid JSON in this format:
             
             evaluation = json.loads(response_text)
             
-            print(f"[CriticAgent] ✓ Evaluation complete! Overall score: {evaluation['overall_score']}/10")
+            print(f"[CriticAgent]  Evaluation complete! Overall score: {evaluation['overall_score']}/10")
             
             return evaluation
             
         except Exception as e:
-            print(f"[CriticAgent] ✗ Error: {e}")
+            print(f"[CriticAgent]  Error: {e}")
             return {
                 "overall_score": 5.0,
                 "should_retry": False,

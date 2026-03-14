@@ -9,7 +9,7 @@ class SummaryAgent:
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
     
     def run(self, research_data: str) -> str:
-        print("[SummaryAgent] 📝 Creating executive summary...")
+        print("[SummaryAgent]  Creating executive summary...")
         
         prompt = f"""Summarize this research into a clear, actionable executive summary.
 
@@ -35,10 +35,10 @@ Research data:
             
             summary = chat_completion.choices[0].message.content
             
-            print(f"[SummaryAgent] ✓ Summary complete!")
+            print(f"[SummaryAgent]  Summary complete!")
             
             return summary
             
         except Exception as e:
-            print(f"[SummaryAgent] ✗ Error: {e}")
+            print(f"[SummaryAgent]  Error: {e}")
             return f"Error during summarization: {e}"

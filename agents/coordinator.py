@@ -4,7 +4,7 @@ from agents.critic_agent import CriticAgent
 from agents.teach_agent import TeachAgent
 from agents.code_agent import CodeAgent
 from agents.comparison_agent import ComparisonAgent
-from memory.memory_store import MemoryStore
+from memory.vector_memory import VectorMemory
 from groq import Groq
 import os
 from dotenv import load_dotenv
@@ -18,7 +18,7 @@ class CoordinatorAgent:
         self.teach_agent = TeachAgent()
         self.code_agent = CodeAgent()
         self.comparison_agent = ComparisonAgent()
-        self.memory = MemoryStore()
+        self.memory = VectorMemory()
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     def detect_intent(self, goal: str) -> str:
@@ -42,7 +42,7 @@ Reply with ONE word only: research, teaching, coding, or comparison"""
         )
 
         intent = response.choices[0].message.content.strip().lower()
-        print(f"[Coordinator]  Intent detected: {intent}")
+        print(f"[Coordinator] ✓ Intent detected: {intent}")
 
         if intent not in ["research", "teaching", "coding", "comparison"]:
             intent = "research"
@@ -61,7 +61,7 @@ Reply with ONE word only: research, teaching, coding, or comparison"""
         }
 
         if intent == "teaching":
-            print(f"[Coordinator]  Routing to Teaching pipeline")
+            print(f"[Coordinator] 📚 Routing to Teaching pipeline")
             output = self.teach_agent.run(goal)
             evaluation = self.critic_agent.evaluate(goal, output)
             results["final_output"] = output
@@ -70,7 +70,7 @@ Reply with ONE word only: research, teaching, coding, or comparison"""
             return results
 
         elif intent == "coding":
-            print(f"[Coordinator]  Routing to Coding pipeline")
+            print(f"[Coordinator] 💻 Routing to Coding pipeline")
             output = self.code_agent.run(goal)
             evaluation = self.critic_agent.evaluate(goal, output)
             results["final_output"] = output
@@ -79,7 +79,7 @@ Reply with ONE word only: research, teaching, coding, or comparison"""
             return results
 
         elif intent == "comparison":
-            print(f"[Coordinator]  Routing to Comparison pipeline")
+            print(f"[Coordinator] ⚖️ Routing to Comparison pipeline")
             output = self.comparison_agent.run(goal)
             evaluation = self.critic_agent.evaluate(goal, output)
             results["final_output"] = output
@@ -88,10 +88,10 @@ Reply with ONE word only: research, teaching, coding, or comparison"""
             return results
 
         else:
-            print(f"[Coordinator]  Routing to Research pipeline")
+            print(f"[Coordinator] 🔍 Routing to Research pipeline")
             for iteration in range(max_iterations):
                 print(f"\n{'='*60}")
-                print(f" ITERATION {iteration + 1}/{max_iterations}")
+                print(f"🔄 ITERATION {iteration + 1}/{max_iterations}")
                 print(f"{'='*60}\n")
 
                 iteration_data = {
@@ -120,9 +120,9 @@ Reply with ONE word only: research, teaching, coding, or comparison"""
                     results["final_output"] = summary_output
                     results["final_evaluation"] = evaluation
                     self.memory.save(goal, summary_output)
-                    print(f"\n Task complete after {iteration + 1} iteration(s)!")
+                    print(f"\n✅ Task complete after {iteration + 1} iteration(s)!")
                     break
                 else:
-                    print(f"\n Retrying to improve quality...")
+                    print(f"\n🔁 Retrying to improve quality...")
 
         return results

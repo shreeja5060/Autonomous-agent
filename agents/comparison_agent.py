@@ -8,7 +8,7 @@ class ComparisonAgent:
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     def run(self, topic: str) -> str:
-        print(f"[ComparisonAgent] ⚖️ Comparing: {topic}")
+        print(f"[ComparisonAgent]  Comparing: {topic}")
 
         prompt = f"""You are an expert analyst.
 Compare the two subjects in this query.
@@ -31,8 +31,8 @@ Be specific and practical."""
                 max_tokens=800,
             )
             result = response.choices[0].message.content
-            print(f"[ComparisonAgent] ✓ Comparison complete!")
+            print(f"[ComparisonAgent]  Comparison complete!")
             return result
         except Exception as e:
-            print(f"[ComparisonAgent] ✗ Error: {e}")
+            print(f"[ComparisonAgent]  Error: {e}")
             return f"Error: {e}"

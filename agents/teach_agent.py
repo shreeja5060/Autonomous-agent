@@ -8,7 +8,7 @@ class TeachAgent:
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     def run(self, topic: str) -> str:
-        print(f"[TeachAgent] 📚 Teaching: {topic}")
+        print(f"[TeachAgent]  Teaching: {topic}")
 
         prompt = f"""You are an expert teacher. Teach this topic clearly.
 
@@ -30,9 +30,9 @@ Teach like you're explaining to a smart beginner."""
                 max_tokens=800,
             )
             result = response.choices[0].message.content
-            print(f"[TeachAgent] ✓ Teaching complete!")
+            print(f"[TeachAgent]  Teaching complete!")
             return result
 
         except Exception as e:
-            print(f"[TeachAgent] ✗ Error: {e}")
+            print(f"[TeachAgent]  Error: {e}")
             return f"Error: {e}"

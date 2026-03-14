@@ -12,12 +12,12 @@ class ResearchAgent:
 
     def _search_web(self, topic: str) -> str:
         """Search the web and return results as a string"""
-        print(f"[ResearchAgent] 🌐 Searching web for: {topic}")
+        print(f"[ResearchAgent]  Searching web for: {topic}")
         
         try:
             results = self.ddgs.text(topic, max_results=5)
             
-            # Format results into a readable string for the LLM
+           
             formatted = ""
             for i, r in enumerate(results, 1):
                 formatted += f"Result {i}: {r['title']}\n"
@@ -32,15 +32,15 @@ class ResearchAgent:
     def run(self, topic: str, past_context: str = "No memory found") -> str:
         print(f"[ResearchAgent] 🔍 Researching topic: {topic}")
 
-        # Step 1 — get real web results
+       
         web_results = self._search_web(topic)
 
-        # Step 2 — build context from memory
+        
         context_block = ""
         if past_context != "No memory found":
             context_block = f"\n\nPrevious research on this topic:\n{past_context}\nBuild on this, don't repeat it."
 
-        # Step 3 — pass BOTH to the LLM
+       
         prompt = f"""You are a research expert. Use these real web search results to answer the topic.
 Do NOT use your training data — only use what's in the search results below.
 
@@ -65,9 +65,9 @@ Be concise, factual, and well-structured."""
             )
 
             research_data = chat_completion.choices[0].message.content
-            print(f"[ResearchAgent] ✓ Research complete!")
+            print(f"[ResearchAgent]  Research complete!")
             return research_data
 
         except Exception as e:
-            print(f"[ResearchAgent] ✗ Error: {e}")
+            print(f"[ResearchAgent]  Error: {e}")
             return f"Error during research: {e}"
